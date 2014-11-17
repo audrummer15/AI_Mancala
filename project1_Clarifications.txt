@@ -1,0 +1,21 @@
+--------------
+ Action Items
+--------------
+
+Allison 
+	GUI
+	Alpha-Beta Minimax
+	H1 Function
+
+Adam
+	AND-OR
+	H2 Function
+	Hash Table + Store/Retrieve Functions
+
+-----------------
+ Data Structures
+-----------------
+
+Heuristic Board: 2D-Array of Lists 		-- hBoard[][]()
+Game Board: 2D-Array of Ints 			-- gameBoard[][]
+Transposition Table: Hashtable of Ints	-- transTable{}
