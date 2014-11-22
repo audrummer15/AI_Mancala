@@ -1,4 +1,4 @@
-import andOr as AO
+import adamFunctions as AO
 
 if __name__ == '__main__':
 	board = [[0 for x in range(5)] for x in range(2)] 
@@ -6,7 +6,9 @@ if __name__ == '__main__':
 	board[1][4] = 6
 
 	print board
-	print AO.getMinimaxFromTransTable(AO.boardToHashIndex(board))
-	print AO.storeMinimaxValue(AO.boardToHashIndex(board), 1000)
-	print AO.storeMinimaxValue(AO.boardToHashIndex(board), 1001)
-	print AO.getMinimaxFromTransTable(AO.boardToHashIndex(board))
+	print "Result of Get: ", AO.getMinimaxFromHashTable(board)
+	print "Result of Store: ", AO.storeMinimaxInHashTable(board, 1000)
+	print "Result of Store: ", AO.storeMinimaxInHashTable(board, 1001)
+	print "Result of Get: ", AO.getMinimaxFromHashTable(board)
+
+	print AO.utilityH2(board)

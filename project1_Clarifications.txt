@@ -10,8 +10,8 @@ Allison
 Adam
 	And_Or_Graph_Search(gameBoard) p. 136
 	x GoalTest(gameBoard)
-	H2 Function
-	Hash Table + Store/Retrieve Functions
+	x H2 Function
+	x Hash Table + Store/Retrieve Functions
 
 -----------------
  Data Structures
