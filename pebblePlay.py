@@ -25,7 +25,9 @@ def heuristicFunction1(currentPlayer, gameBoardIn):
     return totalPlayerPebs
 
 def result(state, action):
-    tempState = list(state) #need to make a copy of gameBoard aka state
+    #tempState = list(state) #need to make a copy of gameBoard aka state
+    numberOfColumns = len(state[0])
+    tempState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
     makeMove(tempState, PLAYER1, action)
     return tempState
 
@@ -109,12 +111,12 @@ def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
         pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
         gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
         maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
-        if(colToMoveFromIn == 0):
+        if(colToMoveFromIn == maxColIndex):
             currentRow = PLAYER2
-            currentColumn = 0
+            currentColumn = maxColIndex
         else:
             currentRow = currentPlayersMove
-            currentColumn = (colToMoveFromIn - 1)
+            currentColumn = (colToMoveFromIn + 1)
         while (pebsToMove > 0):
             gameBoardIn[currentRow][currentColumn] += 1
             pebsToMove -= 1
@@ -221,7 +223,7 @@ def main():
     print "1) Number of Pebbles of Player"
     print "2) "
     while(notProperInput):
-        hValue = int(input("Which heuristic do you want to use?  1 or 2:"))
+        hValue = int(input("Which heuristic do you want to use?  1 or 2:  "))
         if((hValue == 1) or (hValue == 2)):
             notProperInput = False
             
@@ -230,7 +232,7 @@ def main():
     print "1) And-Or Search"
     print "2) Alpha-Beta Minimax"
     while(notProperInput):
-        algValue = int(input("Which algorithm do you want to use?  1 or 2:"))
+        algValue = int(input("Which algorithm do you want to use?  1 or 2:  "))
         if((algValue == 1) or (algValue == 2)):
             notProperInput = False
     print ""
@@ -261,6 +263,10 @@ def main():
                     else:
                         colToMoveFrom = alphaBetaSearch(gameBoard, 0)
                         makeMove(gameBoard, PLAYER1, colToMoveFrom)
+                        debugString = "Algorithm returned:  "
+                        debugString += str(colToMoveFrom)
+                        print debugString
+                        print ""
             
                     currentMove = PLAYER2
                 
