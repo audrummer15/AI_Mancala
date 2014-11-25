@@ -5,13 +5,18 @@ Created on Nov 16, 2014
 '''
 #!/usr/bin/python
 from __builtin__ import True
+from macerrors import nilHandleErr
+from findertools import move
 
 #Heuristic Board: 2D-Array of Lists         -- hBoard[][]()
 #Game Board: 2D-Array of Ints             -- gameBoard[][]
 
 # Constants for referencing players
-PLAYER1 = 0
-PLAYER2 = 1
+PLAYER1 = 0  #player A
+PLAYER2 = 1  #player B
+
+#global variables
+depthForCutOffTest = 0
 
 def heuristicFunction1(currentPlayer, gameBoardIn):
     totalPlayerPebs = 0
@@ -19,6 +24,85 @@ def heuristicFunction1(currentPlayer, gameBoardIn):
         totalPlayerPebs += gameBoardIn[currentPlayer][i]
     return totalPlayerPebs
 
+def result(state, action):
+    tempState = list(state) #need to make a copy of gameBoard aka state
+    makeMove(tempState, PLAYER1, action)
+    return tempState
+
+def cutOffTest(state, depth):
+    if (depth == depthForCutOffTest):
+        return True
+    else:
+        return False
+
+def maxValue(state, alpha, beta, depth, pathStates):
+    if (state in pathStates):
+        return float('-inf')
+    if (cutOffTest(state, depth) == True):
+        #check which utility is used
+        return heuristicFunction1(PLAYER1, state)
+    #pathStates.insert(state, len(pathStates))
+    pathStates.append(state)
+    v = float('-inf')
+    for move in range(len(state[0])):
+        statePrime = result(state, move)
+        if False:#statePrime in transTable
+            #vPrime = transTable(statePrime)
+            return
+        else:
+            vPrime = minValue(statePrime, alpha, beta, (depth + 1), pathStates)
+            #insert into transTable
+        if (vPrime > v):
+            v = vPrime
+        if (v >= beta):
+            return v
+        elif (v > alpha):
+            alpha = v
+    return v
+            
+    
+def minValue(state, alpha, beta, depth, pathStates):
+    if (state in pathStates):
+        return float('inf')
+    if (cutOffTest(state, depth) == True):
+        #check which utility is used
+        return heuristicFunction1(PLAYER1, state)
+    #pathStates.insert(state, len(pathStates))
+    pathStates.append(state)
+    v = float('inf')
+    for move in range(len(state[0])):
+        statePrime = result(state, move)
+        if False:#statePrime in transTable
+            #vPrime = transTable(statePrime)
+            return 
+        else:
+            vPrime = maxValue(statePrime, alpha, beta, (depth + 1), pathStates)
+            #insert into transTable
+        if (vPrime < v):
+            v = vPrime
+        if (v <= alpha):
+            return v
+        elif (v > beta):
+            beta = v
+    return v
+    
+def alphaBetaSearch(state, depth): #state is game board and depth is the ply
+    v = float('-inf')
+    a = None
+    alpha = float('-inf')
+    beta = float('inf')
+    pathStates = []
+    for move in range(len(state[0])): #each column is a move
+        statePrime = result(state, move)  #need to make fake gameboard?
+        vPrime = maxValue(statePrime, alpha, beta, depth, pathStates) #had as min in algorithm, but shouldn't it be max?
+        if (vPrime > v):
+            v = vPrime
+            a = move
+        if (v >= beta):
+            return a
+        elif (v > alpha):
+            alpha = v
+    return a
 
 def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
     if (currentPlayersMove == PLAYER1):
@@ -117,6 +201,7 @@ def main():
     
     pebsPerSq = int(input("Please enter the number of pebbles per square:  "))
     ply = int(input("Please enter the number of plys:  "))
+    depthForCutOffTest = ply
     
     notProperInput = True
     while(notProperInput):
@@ -170,8 +255,15 @@ def main():
                     print ""
                     print "Player 1's move"
                     print ""
+                    
+                    if(algValue == 1):
+                        print "not implemented yet"
+                    else:
+                        colToMoveFrom = alphaBetaSearch(gameBoard, 0)
+                        makeMove(gameBoard, PLAYER1, colToMoveFrom)
             
                     currentMove = PLAYER2
+                
                 else:
                     '''
                     Calculates Player 2's Heuristic Value

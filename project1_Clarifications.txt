@@ -3,9 +3,9 @@
 --------------
 
 Allison 
-	GUI
+	X GUI
 	Alpha-Beta Minimax
-	H1 Function
+	X H1 Function
 
 Adam
 	And_Or_Graph_Search(gameBoard) p. 136
