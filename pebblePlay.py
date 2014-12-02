@@ -24,11 +24,11 @@ def heuristicFunction1(currentPlayer, gameBoardIn):
         totalPlayerPebs += gameBoardIn[currentPlayer][i]
     return totalPlayerPebs
 
-def result(state, action):
+def result(state, action, currentPlayer):
     #tempState = list(state) #need to make a copy of gameBoard aka state
     numberOfColumns = len(state[0])
     tempState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
-    makeMove(tempState, PLAYER1, action)
+    makeMove(tempState, currentPlayer, action)
     return tempState
 
 def cutOffTest(state, depth):
@@ -37,7 +37,7 @@ def cutOffTest(state, depth):
     else:
         return False
 
-def maxValue(state, alpha, beta, depth, pathStates):
+def maxValue(state, alpha, beta, depth, pathStates, currentPlayer):
     if (state in pathStates):
         return float('-inf')
     if (cutOffTest(state, depth) == True):
@@ -47,12 +47,12 @@ def maxValue(state, alpha, beta, depth, pathStates):
     pathStates.append(state)
     v = float('-inf')
     for move in range(len(state[0])):
-        statePrime = result(state, move)
+        statePrime = result(state, move, currentPlayer)
         if False:#statePrime in transTable
             #vPrime = transTable(statePrime)
             return
         else:
-            vPrime = minValue(statePrime, alpha, beta, (depth + 1), pathStates)
+            vPrime = minValue(statePrime, alpha, beta, (depth + 1), pathStates, not(currentPlayer))
             #insert into transTable
         if (vPrime > v):
             v = vPrime
@@ -63,7 +63,7 @@ def maxValue(state, alpha, beta, depth, pathStates):
     return v
             
     
-def minValue(state, alpha, beta, depth, pathStates):
+def minValue(state, alpha, beta, depth, pathStates, currentPlayer):
     if (state in pathStates):
         return float('inf')
     if (cutOffTest(state, depth) == True):
@@ -73,12 +73,12 @@ def minValue(state, alpha, beta, depth, pathStates):
     pathStates.append(state)
     v = float('inf')
     for move in range(len(state[0])):
-        statePrime = result(state, move)
+        statePrime = result(state, move, currentPlayer)
         if False:#statePrime in transTable
             #vPrime = transTable(statePrime)
             return 
         else:
-            vPrime = maxValue(statePrime, alpha, beta, (depth + 1), pathStates)
+            vPrime = maxValue(statePrime, alpha, beta, (depth + 1), pathStates, not(currentPlayer))
             #insert into transTable
         if (vPrime < v):
             v = vPrime
@@ -88,15 +88,15 @@ def minValue(state, alpha, beta, depth, pathStates):
             beta = v
     return v
     
-def alphaBetaSearch(state, depth): #state is game board and depth is the ply
+def alphaBetaSearch(state, depth, currentPlayer): #state is game board and depth is the ply
     v = float('-inf')
     a = None
     alpha = float('-inf')
     beta = float('inf')
     pathStates = []
     for move in range(len(state[0])): #each column is a move
-        statePrime = result(state, move)  #need to make fake gameboard?
-        vPrime = maxValue(statePrime, alpha, beta, depth, pathStates) #had as min in algorithm, but shouldn't it be max?
+        statePrime = result(state, move, currentPlayer)  #need to make fake gameboard?
+        vPrime = maxValue(statePrime, alpha, beta, depth, pathStates, currentPlayer) #had as min in algorithm, but shouldn't it be max?
         if (vPrime > v):
             v = vPrime
             a = move
@@ -261,7 +261,7 @@ def main():
                     if(algValue == 1):
                         print "not implemented yet"
                     else:
-                        colToMoveFrom = alphaBetaSearch(gameBoard, 0)
+                        colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1)
                         makeMove(gameBoard, PLAYER1, colToMoveFrom)
                         debugString = "Algorithm returned:  "
                         debugString += str(colToMoveFrom)
