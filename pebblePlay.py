@@ -83,6 +83,8 @@ def result(state, action, currentPlayer):
 def cutOffTest(state, depth):
     if (depth == depthForCutOffTest):
         return True
+    elif (goalTest(state)):
+        return True
     else:
         return False
 
@@ -186,7 +188,7 @@ def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
                 currentColumn -= 1
             elif (currentRow == PLAYER1):
                 currentColumn += 1
-    else:
+    else: #player 2
         pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
         gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
         maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
@@ -228,7 +230,7 @@ def goalTest(gameBoard):
     return bGoalState
 
 def printGameBoard(gameBoardIn):
-    rowString = "Player 1 (Computer):  "
+    rowString = "Player 1:             "
     for i in range(len(gameBoardIn[0])):
         rowString += "["
         rowString += str(gameBoardIn[0][i])
@@ -262,13 +264,15 @@ def main():
     pebsPerSq = int(input("Please enter the number of pebbles per square:  "))
     ply = int(input("Please enter the number of plys:  "))
     depthForCutOffTest = ply
+    print ""
     
     notProperInput = True
     while(notProperInput):
         runOrStep = int(input("How are you viewing the game?  0-run through or 1-step through:  "))
         if ((runOrStep == 0) or (runOrStep == 1)):
             notProperInput = False
-        
+    print "" 
+      
     if(runOrStep == 1):
         notProperInput = True
         while(notProperInput):
@@ -278,7 +282,8 @@ def main():
                 
     if(runOrStep == 0):  #means comp must be playing itself
         userPlaying = 0
-
+    print ""
+    
     if(userPlaying):
         notProperInput = True
         print "Heuristics"
@@ -288,6 +293,7 @@ def main():
             hValue = int(input("Which heuristic do you want computer to use?  1 or 2:  "))
             if((hValue == 1) or (hValue == 2)):
                 notProperInput = False
+        print""
             
         notProperInput = True
         print "Planning Algorithms"
@@ -308,7 +314,8 @@ def main():
             hValuePlayer1 = int(input("Which heuristic do you want to use for player 1?  1 or 2:  "))
             if((hValuePlayer1 == 1) or (hValuePlayer1 == 2)):
                 notProperInput = False
-                
+        print ""        
+        
         notProperInput = True
         print "Heuristics"
         print "1) Number of Pebbles of Player"
@@ -317,6 +324,7 @@ def main():
             hValuePlayer2 = int(input("Which heuristic do you want to use for player 2?  1 or 2:  "))
             if((hValuePlayer2 == 1) or (hValuePlayer2 == 2)):
                 notProperInput = False
+        print ""
                 
         notProperInput = True
         print "Planning Algorithms"
@@ -326,6 +334,7 @@ def main():
             algValuePlayer1 = int(input("Which algorithm do you want to use for player 1?  1 or 2:  "))
             if((algValuePlayer1 == 1) or (algValuePlayer1 == 2)):
                 notProperInput = False
+        print ""
         
         notProperInput = True
         print "Planning Algorithms"
@@ -347,6 +356,7 @@ def main():
     #else:  #means stepping through
     currentMove = PLAYER1
     if(userPlaying):
+        print "You are Player 2"
         while(not(goalTest(gameBoard))):
             '''
             Use Function to Print Game Board
@@ -397,12 +407,22 @@ def main():
         
     else:
         #step through with two computers or run with two computers
+        printGameBoard(gameBoard)
         while(not(goalTest(gameBoard))):
             '''
             Use Function to Print Game Board
             '''
-            printGameBoard(gameBoard)
-        
+            #printGameBoard(gameBoard)
+            
+            '''
+            if(runOrStep == 1):
+                notProperInput = True
+                while(notProperInput):
+                    runOrStep = int(input("Would you like to run though the rest of the game or continue stepping through?  0-run through or 1-step through:  "))
+                    if ((runOrStep == 0) or (runOrStep == 1)):
+                        notProperInput = False
+            '''
+            
             if(currentMove == PLAYER1):
                 print ""
                 print "Player 1's move"
@@ -419,7 +439,10 @@ def main():
                     print ""
             
                 currentMove = PLAYER2
-                if(runOrStep == 1):
+                
+                printGameBoard(gameBoard)
+                
+                if(runOrStep == 1 and not(goalTest(gameBoard))):
                     notProperInput = True
                     while(notProperInput):
                         runOrStep = int(input("Would you like to run though the rest of the game or continue stepping through?  0-run through or 1-step through:  "))
@@ -442,7 +465,10 @@ def main():
                     print ""
             
                 currentMove = PLAYER1
-                if(runOrStep == 1):
+                
+                printGameBoard(gameBoard)
+                
+                if(runOrStep == 1 and not(goalTest(gameBoard))):
                     notProperInput = True
                     while(notProperInput):
                         runOrStep = int(input("Would you like to run though the rest of the game or continue stepping through?  0-run through or 1-step through:  "))
