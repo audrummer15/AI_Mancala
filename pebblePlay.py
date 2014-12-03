@@ -356,14 +356,18 @@ def main():
     #else:  #means stepping through
     currentMove = PLAYER1
     if(userPlaying):
-        print "You are Player 2"
+        print "Note:  You are Player 2"
+        print ""
         while(not(goalTest(gameBoard))):
             '''
             Use Function to Print Game Board
             '''
             printGameBoard(gameBoard)
+            print ""
         
             if(currentMove == PLAYER1):
+                raw_input("Press enter to continue and see Player 1's next move.  ")
+                
                 print ""
                 print "Player 1's move"
                 print ""
@@ -373,14 +377,19 @@ def main():
                 else:
                     colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValue)
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
-                    debugString = "Algorithm returned:  "
-                    debugString += str(colToMoveFrom)
-                    print debugString
+                    #debugString = "Algorithm returned:  "
+                    #debugString += str(colToMoveFrom)
+                    #print debugString
                     print ""
             
                 currentMove = PLAYER2
                 
             else:
+                
+                print ""
+                print "Your move"
+                print ""
+                
                 notValidInput = True
                 while (notValidInput):
                     colToMoveFrom = int(input("Which of your squares do you empty?  The numbering starts from the left with value 0:  "))
@@ -392,9 +401,11 @@ def main():
                         notValidInput = False
                 
                 makeMove(gameBoard, PLAYER2, colToMoveFrom)
-            
+                print ""
+                
                 currentMove = PLAYER1
         print ""
+        print "--END OF GAME RESULTS--"
         print "Final Game Board:"
             
         printGameBoard(gameBoard)
@@ -413,15 +424,6 @@ def main():
             Use Function to Print Game Board
             '''
             #printGameBoard(gameBoard)
-            
-            '''
-            if(runOrStep == 1):
-                notProperInput = True
-                while(notProperInput):
-                    runOrStep = int(input("Would you like to run though the rest of the game or continue stepping through?  0-run through or 1-step through:  "))
-                    if ((runOrStep == 0) or (runOrStep == 1)):
-                        notProperInput = False
-            '''
             
             if(currentMove == PLAYER1):
                 print ""
