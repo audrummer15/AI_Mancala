@@ -9,23 +9,37 @@ from macerrors import nilHandleErr
 from findertools import move
 from copy import deepcopy
 
-#Heuristic Board: 2D-Array of Lists         -- hBoard[][]()
-#Game Board: 2D-Array of Ints             -- gameBoard[][]
-
 # Constants for referencing players
 PLAYER1 = 0  #player A
 PLAYER2 = 1  #player B
 
-PLAYER = 0   #For redundancy
-OPPONENT = 1 #For redundancy
+PLAYER = 0   #For redundancy used in the AND-OR
+OPPONENT = 1 #For redundancy used in the AND-OR
 
 # For referencing pieces of and-or return tuples
 ACTION = 0
 VALUE = 1
 
 #global variables
+'''
+This global variable is used to store the number plys
+The way we have our algorithm set up, the depth starts
+at zero and the searching continues until the depth
+gets to the specified ply.
+'''
 depthForCutOffTest = 0
 
+'''
+Function:  heuristicFunction1
+Purpose:  Calculates the current player's heuristic value.  In this case,
+          the heuristic value is based off the current player's total
+          number of pebbles.
+Parameters:
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+    gameBoardIn:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+Returns:  The current player's number of pebbles
+'''
 def heuristicFunction1(currentPlayer, gameBoardIn):
     totalPlayerPebs = 0
     for i in range(len(gameBoardIn[currentPlayer])):
@@ -79,13 +93,36 @@ def storeMinimaxInHashTable(gameBoard, minimaxValue, transTable):
         return True
     else:
         return False
-
+    
+'''
+Function:  result
+Purpose:  Copies the current game board and starts testing moves the current player
+          can make.
+Parameters:
+    state:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+    action:  This is the column number the current player is moving his or her
+            pebbles from
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+Returns:  The hypothetical game board for testing a move the player is thinking
+          about making
+'''
 def result(state, action, currentPlayer):
     numberOfColumns = len(state[0])
     tempState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
     makeMove(tempState, currentPlayer, action)
     return tempState
 
+'''
+Function:  cutoffTest
+Purpose:  Tests to see if the search has reached the end of the ply or if the
+          state currently being searched is a goal state.
+Parameters:
+    state:  This is the current gameBoard and is used to if the state has reached
+             a goal state.
+    depth:  The current depth of the search tree
+Returns:  If the current state is at the specified ply or a goal state
+'''
 def cutOffTest(state, depth):
     if (depth == depthForCutOffTest):
         return True
@@ -94,6 +131,27 @@ def cutOffTest(state, depth):
     else:
         return False
 
+'''
+Function:  maxValue
+Purpose:  Used to determine which move the current player can make to maximize
+          his or her heuristic value
+Parameters:
+    state:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+    alpha:  The minimum utility value in the search
+    beta:   The maximum utility value in the search
+    depth:  The current depth of the search tree
+    pathStates:  The list of states the search has already come across.  Used to
+                 prevent looping.
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+                    while searching
+    heurValue:  Used to determine which heuristic function to use
+    playerToMakeMove:  Used to determine which player is making the moves and 
+                       affecting the game board during this part of the search
+    transTable:  The transpositionTable used to store the hash values of a game
+                 state and its heuristic value
+Returns:  The maximum heuristic value for that level and branch of the search tree
+'''
 def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove, transTable):
     if (state in pathStates):
         return float('-inf')
@@ -122,7 +180,27 @@ def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
                 alpha = v
     return v
             
-    
+'''
+Function:  minValue
+Purpose:  Used to determine which move the current player's opponent can make 
+          to minimize the current player's heuristic value
+Parameters:
+    state:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+    alpha:  The minimum utility value in the search
+    beta:   The maximum utility value in the search
+    depth:  The current depth of the search tree
+    pathStates:  The list of states the search has already come across.  Used to
+                 prevent looping.
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+                    while searching
+    heurValue:  Used to determine which heuristic function to use
+    playerToMakeMove:  Used to determine which player is making the moves and 
+                       affecting the game board during this part of the search
+    transTable:  The transpositionTable used to store the hash values of a game
+                 state and its heuristic value
+Returns:  The minimum heuristic value for that level and branch of the search tree
+''' 
 def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove, transTable):
     if (state in pathStates):
         return float('inf')
@@ -150,7 +228,24 @@ def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
             elif (v > beta):
                 beta = v
     return v
-    
+
+'''
+Function:  alphaBetaSearch
+Purpose:  Used to determine which move the current player can make to maximize
+          his or her heuristic value.  Uses the functions minValue and maxValue
+          in the process
+Parameters:
+    state:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+    depth:  The current depth of the search tree
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+                    while searching
+    heurValue:  Used to determine which heuristic function to use
+    transTable:  The transpositionTable used to store the hash values of a game
+                 state and its heuristic value
+Returns:  The column number from which the current player should move to maximize
+          his or her utility
+'''  
 def alphaBetaSearch(state, depth, currentPlayer, heurValue, transTable): #state is game board and depth is the ply
     playerToMakeMove = currentPlayer
     v = float('-inf')
@@ -172,6 +267,17 @@ def alphaBetaSearch(state, depth, currentPlayer, heurValue, transTable): #state 
                 alpha = v
     return a
 
+'''
+Function:  makeMove
+Purpose:  Allows players to move their pebbles on the game board.  The variable
+          colToMoveFromIn is the slot where the pebbles are removed and then
+          distributed in a clockwise manner.
+Parameters:
+    gameBoardIn:  This is the current state of the game board
+    currentPlayersMove:  Used to determine which row to move the pebble from
+    colToMoveFromIn:  Used to determine which column to remove the pebbles from
+Returns:  Nothing
+'''
 def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
     if (currentPlayersMove == PLAYER1):
         pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
@@ -235,6 +341,13 @@ def goalTest(gameBoard):
 
     return bGoalState
 
+'''
+Function:  printGameBoard
+Purpose:  Prints the current state of the game board
+Parameters:
+    gameBoardIn:  The game board at its current state
+Returns:  Nothing
+'''
 def printGameBoard(gameBoardIn):
     rowString = "Player 1:             "
     for i in range(len(gameBoardIn[0])):
@@ -251,13 +364,21 @@ def printGameBoard(gameBoardIn):
     print rowString
     return
 
+'''
+Function:  main
+Purpose:  Used interact with user and set up the Pebble Play game.  We
+          are assuming that Player 1 is always the computer and always 
+          gets to make the first move.
+Parameters:  None
+Returns:  None
+'''
 def main():
     
     '''
     Collect User Input at Beginning of Program Execution
     '''
+    #Get the number of columns per player
     numCols = int(input("Please enter the number of columns per player:  "))
-    #print numCols #how does this make since...
     if (numCols < 2):
         print "There must be at least two columns"
         print "Updated the number of columns to 2"
@@ -267,11 +388,13 @@ def main():
         print "Updated the number of columns to 10"
         numCols = 10
     
+    #Get the number of pebbles per column
     pebsPerSq = int(input("Please enter the number of pebbles per square:  "))
     ply = int(input("Please enter the number of plys:  "))
     depthForCutOffTest = ply
     print ""
     
+    #Determine if the user if running or stepping through the game
     notProperInput = True
     while(notProperInput):
         runOrStep = int(input("How are you viewing the game?  0-run through or 1-step through:  "))
@@ -279,6 +402,7 @@ def main():
             notProperInput = False
     print "" 
       
+    #If the user is stepping through, are they playing the game or watching the computer play itself
     if(runOrStep == 1):
         notProperInput = True
         while(notProperInput):
@@ -286,11 +410,13 @@ def main():
             if ((userPlaying == 0) or (userPlaying == 1)):
                 notProperInput = False
                 
-    if(runOrStep == 0):  #means comp must be playing itself
+    if(runOrStep == 0):  #means computer must be playing itself
         userPlaying = 0
     print ""
     
+    #If the user is playing against the computer
     if(userPlaying):
+        #Get the heuristic for the computer to use
         notProperInput = True
         print "Heuristics"
         print "1) Number of Pebbles of Player"
@@ -300,7 +426,8 @@ def main():
             if((hValue == 1) or (hValue == 2)):
                 notProperInput = False
         print""
-            
+        
+        #Get the algorithm for the computer to use
         notProperInput = True
         print "Planning Algorithms"
         print "1) And-Or Search"
@@ -310,8 +437,9 @@ def main():
             if((algValue == 1) or (algValue == 2)):
                 notProperInput = False
         print ""
-        
+    #Else the user is watching the computer play itself   
     else:
+        #Get Player 1's heuristic
         notProperInput = True
         print "Heuristics"
         print "1) Number of Pebbles of Player"
@@ -322,6 +450,7 @@ def main():
                 notProperInput = False
         print ""        
         
+        #Get Player 2's heuristic
         notProperInput = True
         print "Heuristics"
         print "1) Number of Pebbles of Player"
@@ -331,7 +460,8 @@ def main():
             if((hValuePlayer2 == 1) or (hValuePlayer2 == 2)):
                 notProperInput = False
         print ""
-                
+        
+        #Get Player 1's algorithm        
         notProperInput = True
         print "Planning Algorithms"
         print "1) And-Or Search"
@@ -342,6 +472,7 @@ def main():
                 notProperInput = False
         print ""
         
+        #Get Player 2's algorithm
         notProperInput = True
         print "Planning Algorithms"
         print "1) And-Or Search"
@@ -355,12 +486,12 @@ def main():
     '''
     Set Up Game Board
     '''
-    gameBoard = [[pebsPerSq for y in range(numCols)] for x in range(2)]  #range vs xrange?
+    gameBoard = [[pebsPerSq for y in range(numCols)] for x in range(2)]
     
-    #if (runOrStep == 0): #when running through
-        #print "TBD"
-    #else:  #means stepping through
+    #As stated before, we are allowing Player 1 to always make the first move
     currentMove = PLAYER1
+    #If the user is playing, it alternates between the computer making moves
+    #and the user specifying which column they want to move
     if(userPlaying):
         print "Note:  You are Player 2"
         print ""
@@ -370,7 +501,7 @@ def main():
             '''
             printGameBoard(gameBoard)
             print ""
-        
+            
             if(currentMove == PLAYER1):
                 raw_input("Press enter to continue and see Player 1's next move.  ")
                 
@@ -383,7 +514,6 @@ def main():
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
                     print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
-                    
                     # Not Global "Hash Table"
                     transTable = {}
                     colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValue, transTable)
@@ -392,8 +522,7 @@ def main():
             
                 currentMove = PLAYER2
                 
-            else:
-                
+            else:  
                 print ""
                 print "Your move"
                 print ""
@@ -423,15 +552,13 @@ def main():
             print "Congratulations you won!"
         else:
             print "Sorry you lost. Better luck next time."
-        
+    
+    #If the user is watching the computer play itself, the user only interacts with
+    #the program if they are stepping through.  When stepping through, the user has
+    #the ability to change to the run through mode.    
     else:
-        #step through with two computers or run with two computers
         printGameBoard(gameBoard)
         while(not(goalTest(gameBoard))):
-            '''
-            Use Function to Print Game Board
-            '''
-            #printGameBoard(gameBoard)
             
             if(currentMove == PLAYER1):
                 print ""
@@ -523,12 +650,10 @@ def andOrGraphSearch(gameBoard, ply, heurValue, player):
 def orSearch(board, path, moves, heurValue, player):
     plan = False
 
-    # If the board is a goal
-    # or 
-    # If we have hit our depth limit, 
-    #   return the heuristic value of the current board
-    #   The action parameter of the tuple doesn't matter, so return -infinity
-    if goalTest(board) or moves <= 0: 
+    if goalTest(board): 
+        return [-1, float('inf')]
+
+    if moves <= 0:
         if(heurValue == 1):
             return [float('-inf'), heuristicFunction1(player, board)]
         else:
