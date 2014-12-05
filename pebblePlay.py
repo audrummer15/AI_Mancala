@@ -7,6 +7,7 @@ Created on Nov 16, 2014
 from __builtin__ import True
 from macerrors import nilHandleErr
 from findertools import move
+from copy import deepcopy
 
 #Heuristic Board: 2D-Array of Lists         -- hBoard[][]()
 #Game Board: 2D-Array of Ints             -- gameBoard[][]
@@ -14,6 +15,13 @@ from findertools import move
 # Constants for referencing players
 PLAYER1 = 0  #player A
 PLAYER2 = 1  #player B
+
+PLAYER = 0   #For redundancy
+OPPONENT = 1 #For redundancy
+
+# For referencing pieces of and-or return tuples
+ACTION = 0
+VALUE = 1
 
 # Global "Hash Table"
 transTable = {}
@@ -51,6 +59,19 @@ def boardToHashIndex(gameBoard, currentPlayer):
     for i in range( len( gameBoard[PLAYER1] ) ):
         hashIndex1 += str(gameBoard[PLAYER1][i])
         hashIndex2 += str(gameBoard[PLAYER2][i])
+
+    return hashIndex1 + hashIndex2
+
+def boardToHashIndex(gameBoard):
+    if( not isValidBoard(gameBoard) ):
+        return False
+
+    hashIndex1 = ""
+    hashIndex2 = ""
+
+    for i in range( len( gameBoard[PLAYER] ) ):
+        hashIndex1 += str(gameBoard[PLAYER][i])
+        hashIndex2 += str(gameBoard[OPPONENT][i])
 
     return hashIndex1 + hashIndex2
 
@@ -373,7 +394,9 @@ def main():
                 print ""
                     
                 if(algValue == 1):
-                    print "not implemented yet"
+                    colToMoveFrom = andOrGraphSearch(gameBoard, depthForCutOffTest, hValue, PLAYER1)
+                    makeMove(gameBoard, PLAYER1, colToMoveFrom)
+                    print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
                     colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValue)
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
@@ -431,7 +454,9 @@ def main():
                 print ""
                     
                 if(algValuePlayer1 == 1):
-                    print "not implemented yet"
+                    colToMoveFrom = andOrGraphSearch(gameBoard, depthForCutOffTest, hValuePlayer1, PLAYER1)
+                    makeMove(gameBoard, PLAYER1, colToMoveFrom)
+                    print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
                     colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValuePlayer1)
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
@@ -457,7 +482,9 @@ def main():
                 print ""
                     
                 if(algValuePlayer2 == 1):
-                    print "not implemented yet"
+                    colToMoveFrom = andOrGraphSearch(gameBoard, depthForCutOffTest, hValuePlayer2, PLAYER2)
+                    makeMove(gameBoard, PLAYER2, colToMoveFrom)
+                    print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
                     colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER2, hValuePlayer2)
                     makeMove(gameBoard, PLAYER2, colToMoveFrom)
@@ -488,6 +515,122 @@ def main():
             print "Player 1 won!"
     
     return
+
+#########################################
+#                                       #
+# AND-OR Search Algorithm Functionality #
+#                                       #
+#########################################
+
+def andOrGraphSearch(gameBoard, ply, heurValue, player):
+    if( not isValidBoard(gameBoard) ):
+        return False
+
+    # Problem is the board given
+    # State is the current state of the board
+    return orSearch(gameBoard, [], ply, heurValue, player)[ACTION]
+
+
+def orSearch(board, path, moves, heurValue, player):
+    plan = False
+
+    if goalTest(board): 
+        return [-1, float('inf')]
+
+    if moves <= 0:
+        if(heurValue == 1):
+            return [float('-inf'), heuristicFunction1(player, board)]
+        else:
+            return [float('-inf'), utilityH2(player, board)]
+
+    value = float('-inf')
+    
+    if boardToHashIndex(board) in path:
+        return False
+
+    for action in range( len( board[player] ) ):
+        if board[player][action] != 0: #if the move is valid
+            if moves > 1:
+                newPath = deepcopy(path)
+                newPath.insert(0, boardToHashIndex(board))
+                newValue = andSearch( results(board, action, player), newPath, moves - 1, heurValue, player)
+            else:
+                if(heurValue == 1):
+                    newValue = heuristicFunction1(player, result(board, action, player))
+                else:
+                    newValue = utilityH2(player, result(board, action, player))
+
+            if newValue != False:
+                if newValue > value:
+                    value = newValue
+                    plan = [action, newValue]
+
+            if plan == False:
+                plan = [action, value]
+
+    return plan
+
+def andSearch(states, path, moves, heurValue, player):
+    if not states:
+        return float('-inf')
+
+    returnValue = 0
+
+    for state in states:
+        if moves <= 0:
+            if(heurValue == 1):
+                returnValue = returnValue + heuristicFunction1(player, state)
+            else:
+                returnValue = returnValue + utilityH2(player, state)
+        else:
+            newPlan = orSearch( state, path, moves - 1, heurValue, PLAYER )
+            
+            if newPlan == False:
+                return False
+
+            returnValue = returnValue + newPlan[VALUE]
+
+    #return average of board heuristics
+    if( len(states) != 0):
+        return (returnValue / len(states))
+    else:
+        return returnValue
+
+
+#results returns a list of states that are potentially presented after player makes a move
+# and the opponent responds
+def results(state, action, player):
+    resultStates = []
+    numberOfColumns = len(state[0])
+    newState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
+
+    newState = result(newState, action, player)
+
+    if goalTest(newState):
+        print "AO-RESULTS RETURN EMPTY"
+        return resultStates
+
+    opponent = 1 - player
+
+    for action in range( numberOfColumns ):
+        tempState = deepcopy(newState)
+        if tempState[opponent][action] != 0:
+            makeMove(tempState, opponent, action)
+            resultStates.append(tempState)
+
+    return resultStates
+
+#########################################
+#                                       #
+#         Helper Functionality          #
+#                                       #
+#########################################
+
+def isValidBoard(gameBoard):
+    if( len(gameBoard) != 2 ):
+        return False
+    else:
+        return True
 
 if __name__ == '__main__':
     main()
