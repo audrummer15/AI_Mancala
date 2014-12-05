@@ -534,10 +534,12 @@ def andOrGraphSearch(gameBoard, ply, heurValue, player):
 def orSearch(board, path, moves, heurValue, player):
     plan = False
 
-    if goalTest(board): 
-        return [-1, float('inf')]
-
-    if moves <= 0:
+    # If the board is a goal
+    # or 
+    # If we have hit our depth limit, 
+    #   return the heuristic value of the current board
+    #   The action parameter of the tuple doesn't matter, so return -infinity
+    if goalTest(board) or moves <= 0: 
         if(heurValue == 1):
             return [float('-inf'), heuristicFunction1(player, board)]
         else:
