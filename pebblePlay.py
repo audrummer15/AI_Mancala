@@ -23,9 +23,6 @@ OPPONENT = 1 #For redundancy
 ACTION = 0
 VALUE = 1
 
-# Global "Hash Table"
-transTable = {}
-
 #global variables
 depthForCutOffTest = 0
 
@@ -52,16 +49,6 @@ def utilityH2(currentPlayer, gameBoard):
 #                                        #
 #########################################
 
-def boardToHashIndex(gameBoard, currentPlayer):
-    hashIndex1 = ""
-    hashIndex2 = ""
-
-    for i in range( len( gameBoard[PLAYER1] ) ):
-        hashIndex1 += str(gameBoard[PLAYER1][i])
-        hashIndex2 += str(gameBoard[PLAYER2][i])
-
-    return hashIndex1 + hashIndex2
-
 def boardToHashIndex(gameBoard):
     if( not isValidBoard(gameBoard) ):
         return False
@@ -75,7 +62,7 @@ def boardToHashIndex(gameBoard):
 
     return hashIndex1 + hashIndex2
 
-def getMinimaxFromHashTable(gameBoard):
+def getMinimaxFromHashTable(gameBoard, transTable):
     hashIndex = boardToHashIndex(gameBoard)
 
     if( hashIndex in transTable ):
@@ -85,9 +72,7 @@ def getMinimaxFromHashTable(gameBoard):
 
     return returnValue
 
-def storeMinimaxInHashTable(gameBoard, minimaxValue):
-    global transTable
-
+def storeMinimaxInHashTable(gameBoard, minimaxValue, transTable):
     if( getMinimaxFromHashTable(gameBoard) == False ):
         hashIndex = boardToHashIndex(gameBoard)
         transTable[hashIndex] = minimaxValue
@@ -109,7 +94,7 @@ def cutOffTest(state, depth):
     else:
         return False
 
-def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove):
+def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove, transTable):
     if (state in pathStates):
         return float('-inf')
     if (cutOffTest(state, depth) == True):
@@ -123,12 +108,12 @@ def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
     for move in range(len(state[0])):
         if(state[playerToMakeMove][move] > 0):
             statePrime = result(state, move, playerToMakeMove)
-            if (getMinimaxFromHashTable(state) != False): #statePrime in transTable
-                vPrime = getMinimaxFromHashTable(state)
+            if (getMinimaxFromHashTable(state, transTable) != False): #statePrime in transTable
+                vPrime = getMinimaxFromHashTable(state, transTable)
                 #return
             else:
-                vPrime = minValue(statePrime, alpha, beta, (depth + 1), pathStates, currentPlayer, heurValue, not(playerToMakeMove))
-                storeMinimaxInHashTable(state, vPrime)
+                vPrime = minValue(statePrime, alpha, beta, (depth + 1), pathStates, currentPlayer, heurValue, not(playerToMakeMove), transTable)
+                storeMinimaxInHashTable(state, vPrime, transTable)
             if (vPrime > v):
                 v = vPrime
             if (v >= beta):
@@ -138,7 +123,7 @@ def maxValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
     return v
             
     
-def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove):
+def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove, transTable):
     if (state in pathStates):
         return float('inf')
     if (cutOffTest(state, depth) == True):
@@ -152,12 +137,12 @@ def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
     for move in range(len(state[0])):
         if(state[playerToMakeMove][move] > 0):
             statePrime = result(state, move, playerToMakeMove)
-            if (getMinimaxFromHashTable(state) != False): #statePrime in transTable
-                vPrime = getMinimaxFromHashTable(state)
+            if (getMinimaxFromHashTable(state, transTable) != False): #statePrime in transTable
+                vPrime = getMinimaxFromHashTable(state, transTable)
                 #return 
             else:
-                vPrime = maxValue(statePrime, alpha, beta, (depth + 1), pathStates, currentPlayer, heurValue, not(playerToMakeMove))
-                storeMinimaxInHashTable(state, vPrime)
+                vPrime = maxValue(statePrime, alpha, beta, (depth + 1), pathStates, currentPlayer, heurValue, not(playerToMakeMove), transTable)
+                storeMinimaxInHashTable(state, vPrime, transTable)
             if (vPrime < v):
                 v = vPrime
             if (v <= alpha):
@@ -166,7 +151,7 @@ def minValue(state, alpha, beta, depth, pathStates, currentPlayer, heurValue, pl
                 beta = v
     return v
     
-def alphaBetaSearch(state, depth, currentPlayer, heurValue): #state is game board and depth is the ply
+def alphaBetaSearch(state, depth, currentPlayer, heurValue, transTable): #state is game board and depth is the ply
     playerToMakeMove = currentPlayer
     v = float('-inf')
     a = None
@@ -177,7 +162,7 @@ def alphaBetaSearch(state, depth, currentPlayer, heurValue): #state is game boar
         #if state is goal state
         if(state[currentPlayer][move] > 0):
             statePrime = result(state, move, currentPlayer)  #need to make fake gameboard?
-            vPrime = maxValue(statePrime, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove) #had as min in algorithm, but shouldn't it be max?
+            vPrime = maxValue(statePrime, alpha, beta, depth, pathStates, currentPlayer, heurValue, playerToMakeMove, transTable) #had as min in algorithm, but shouldn't it be max?
             if (vPrime > v):
                 v = vPrime
                 a = move
@@ -398,11 +383,11 @@ def main():
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
                     print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
-                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValue)
+                    
+                    # Not Global "Hash Table"
+                    transTable = {}
+                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValue, transTable)
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
-                    #debugString = "Algorithm returned:  "
-                    #debugString += str(colToMoveFrom)
-                    #print debugString
                     print ""
             
                 currentMove = PLAYER2
@@ -458,7 +443,9 @@ def main():
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
                     print "Algorithm returned: ", colToMoveFrom, "\n"
                 else:
-                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValuePlayer1)
+                    # Not Global "Hash Table"
+                    transTable = {}
+                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER1, hValuePlayer1, transTable)
                     makeMove(gameBoard, PLAYER1, colToMoveFrom)
                     debugString = "Algorithm returned:  "
                     debugString += str(colToMoveFrom)
@@ -485,8 +472,10 @@ def main():
                     colToMoveFrom = andOrGraphSearch(gameBoard, depthForCutOffTest, hValuePlayer2, PLAYER2)
                     makeMove(gameBoard, PLAYER2, colToMoveFrom)
                     print "Algorithm returned: ", colToMoveFrom, "\n"
-                else:
-                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER2, hValuePlayer2)
+                else:      
+                    # Not Global "Hash Table"
+                    transTable = {}
+                    colToMoveFrom = alphaBetaSearch(gameBoard, 0, PLAYER2, hValuePlayer2, transTable)
                     makeMove(gameBoard, PLAYER2, colToMoveFrom)
                     debugString = "Algorithm returned:  "
                     debugString += str(colToMoveFrom)
