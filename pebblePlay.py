@@ -1,7 +1,7 @@
 '''
 Created on Nov 16, 2014
 
-@author: allisonholt
+@author: allisonholt, adambrown
 '''
 #!/usr/bin/python
 from __builtin__ import True
@@ -29,6 +29,13 @@ gets to the specified ply.
 '''
 depthForCutOffTest = 0
 
+
+
+'''######################################
+#                                       #
+#        Heuristic Functionality        #
+#                                       #
+######################################'''
 '''
 Function:  heuristicFunction1
 Purpose:  Calculates the current player's heuristic value.  In this case,
@@ -46,7 +53,20 @@ def heuristicFunction1(currentPlayer, gameBoardIn):
         totalPlayerPebs += gameBoardIn[currentPlayer][i]
     return totalPlayerPebs
 
-#Adam's function
+'''
+Function:   utilityH2
+Purpose:    Calculates the current player's heuristic value. In this case,
+            the heuristic value is based off the current player's total 
+            number of pebbles - the opponent's pebbles. This tells how far 
+            ahead of the opponent the player is.
+
+Parameters:
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+    gameBoard:      This is the current gameBoard and is used to determine the current
+                    player's number of pebbles.
+
+Returns:    The current player's number of pebbles - the opponet's number of pebbles
+'''
 def utilityH2(currentPlayer, gameBoard):
     playerPebbles = 0
     opponentPebbles = 0
@@ -57,12 +77,25 @@ def utilityH2(currentPlayer, gameBoard):
 
     return playerPebbles - opponentPebbles
 
-#########################################
-#                                        #
-#     Transposition Table Functionality   #
-#                                        #
-#########################################
 
+
+'''######################################
+#                                       #
+#   Transposition Table Functionality   #
+#                                       #
+######################################'''
+
+'''
+Function:   boardToHashIndex
+Purpose:    Takes a game board and creates a string for use as a key
+            to a hash table.
+
+Parameters: 
+    gameBoard: This is the game board to calculate the hash index from.
+
+Returns:    A string representation of the game board if gameBoard is a real board.
+            Otherwise, returns false.
+'''
 def boardToHashIndex(gameBoard):
     if( not isValidBoard(gameBoard) ):
         return False
@@ -76,6 +109,18 @@ def boardToHashIndex(gameBoard):
 
     return hashIndex1 + hashIndex2
 
+'''
+Function:   getMinimaxFromHashTable
+Purpose:    This function is used to get the stored minimax value for a game board from
+            a hash table
+
+Parameters: 
+    gameBoard:  The game board the minimax value is needed for.
+    transTable: A transposition table used by the minimax algorithm.
+
+Returns:    Minimax value for gameBoard stored in the transposition table if exists.
+            Otherwise, it returns false.
+'''
 def getMinimaxFromHashTable(gameBoard, transTable):
     hashIndex = boardToHashIndex(gameBoard)
 
@@ -86,6 +131,19 @@ def getMinimaxFromHashTable(gameBoard, transTable):
 
     return returnValue
 
+'''
+Function:   storeMinimaxInHashTable
+Purpose:    This function is used to store the minimax value for a game board in
+            a hash table.
+
+Parameters:
+    gameBoard:      The game board associated with the chosen minimax value
+    miniMaxValue:   The minimax value of gameBoard
+    transTable:     A transposition table used by the minimax algorithm that will hold miniMaxValue.
+
+Returns:    True if the insertion of miniMaxValue was a success.
+            If the gameBoard already has a value in the transTable, it returns false.
+'''
 def storeMinimaxInHashTable(gameBoard, minimaxValue, transTable):
     if( getMinimaxFromHashTable(gameBoard) == False ):
         hashIndex = boardToHashIndex(gameBoard)
@@ -94,42 +152,13 @@ def storeMinimaxInHashTable(gameBoard, minimaxValue, transTable):
     else:
         return False
     
-'''
-Function:  result
-Purpose:  Copies the current game board and starts testing moves the current player
-          can make.
-Parameters:
-    state:  This is the current gameBoard and is used to determine the current
-                  player's number of pebbles.
-    action:  This is the column number the current player is moving his or her
-            pebbles from
-    currentPlayer:  Used to determine which player's heuristic value to calculate
-Returns:  The hypothetical game board for testing a move the player is thinking
-          about making
-'''
-def result(state, action, currentPlayer):
-    numberOfColumns = len(state[0])
-    tempState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
-    makeMove(tempState, currentPlayer, action)
-    return tempState
 
-'''
-Function:  cutoffTest
-Purpose:  Tests to see if the search has reached the end of the ply or if the
-          state currently being searched is a goal state.
-Parameters:
-    state:  This is the current gameBoard and is used to if the state has reached
-             a goal state.
-    depth:  The current depth of the search tree
-Returns:  If the current state is at the specified ply or a goal state
-'''
-def cutOffTest(state, depth):
-    if (depth == depthForCutOffTest):
-        return True
-    elif (goalTest(state)):
-        return True
-    else:
-        return False
+
+'''######################################
+#                                       #
+#    Alpha-Beta Search Functionality    #
+#                                       #
+######################################'''
 
 '''
 Function:  maxValue
@@ -267,63 +296,236 @@ def alphaBetaSearch(state, depth, currentPlayer, heurValue, transTable): #state 
                 alpha = v
     return a
 
-'''
-Function:  makeMove
-Purpose:  Allows players to move their pebbles on the game board.  The variable
-          colToMoveFromIn is the slot where the pebbles are removed and then
-          distributed in a clockwise manner.
-Parameters:
-    gameBoardIn:  This is the current state of the game board
-    currentPlayersMove:  Used to determine which row to move the pebble from
-    colToMoveFromIn:  Used to determine which column to remove the pebbles from
-Returns:  Nothing
-'''
-def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
-    if (currentPlayersMove == PLAYER1):
-        pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
-        gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
-        maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
-        if(colToMoveFromIn == maxColIndex):
-            currentRow = PLAYER2
-            currentColumn = maxColIndex
-        else:
-            currentRow = currentPlayersMove
-            currentColumn = (colToMoveFromIn + 1)
-        while (pebsToMove > 0):
-            gameBoardIn[currentRow][currentColumn] += 1
-            pebsToMove -= 1
-            if((currentColumn == 0) and (currentRow == PLAYER2)):
-                currentRow = PLAYER1
-            elif((currentColumn == maxColIndex) and (currentRow == PLAYER1)):
-                currentRow = PLAYER2
-            elif (currentRow == PLAYER2):
-                currentColumn -= 1
-            elif (currentRow == PLAYER1):
-                currentColumn += 1
-    else: #player 2
-        pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
-        gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
-        maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
-        if(colToMoveFromIn == 0):
-            currentRow = PLAYER1
-            currentColumn = 0
-        else:
-            currentRow = currentPlayersMove
-            currentColumn = (colToMoveFromIn - 1)
-        while (pebsToMove > 0):
-            gameBoardIn[currentRow][currentColumn] += 1
-            pebsToMove -= 1
-            if((currentColumn == 0) and (currentRow == PLAYER2)):
-                currentRow = PLAYER1
-            elif((currentColumn == maxColIndex) and (currentRow == PLAYER1)):
-                currentRow = PLAYER2
-            elif (currentRow == PLAYER2):
-                currentColumn -= 1
-            elif (currentRow == PLAYER1):
-                currentColumn += 1
-    return
-        
 
+'''######################################
+#                                       #
+# AND-OR Search Algorithm Functionality #
+#                                       #
+######################################'''
+
+'''
+Function:   andOrGraphSearch
+Purpose:    Given a game board and a player, this function will return the best possible
+            move available according to the heuristic value used.
+
+Parameters: 
+    gameBoard:  The current game board in question
+    ply:        The depth at which you wish to consider the future graph of the game board
+    heurValue:  A selector to determine which heuristic value to use.
+    player:     The player for which you wish to calculate the next best possible move.
+
+Returns:    An action (column number to move pebbles from) to take next.
+            False if the gameBoard is invalid
+'''
+def andOrGraphSearch(gameBoard, ply, heurValue, player):
+    if( not isValidBoard(gameBoard) ):
+        return False
+
+    # Problem is the board given
+    # State is the current state of the board
+    return orSearch(gameBoard, [], ply, heurValue, player)[ACTION]
+
+'''
+Function:   orSearch
+Purpose:    Given a board this function, if the board is not a goal state, if there
+            are still moves available due to the ply, and if this board isn't on the
+            current path, for each action available on the board 
+
+Parameters:     
+    board:      The board to perform the search on
+    path:       The path of previous boards visited
+    moves:      The number of moves left to look ahead
+    heurValue:  The enumerated value of the heuristic to use
+    player:     The player who's optimum move you are searching for
+
+Returns:    A tuple containing the action to take, along with it's heuristic value
+            If the board is in the path, return false
+'''
+def orSearch(board, path, moves, heurValue, player):
+    plan = False
+
+    if goalTest(board): 
+        return [-1, float('inf')]
+
+    if moves <= 0:
+        if(heurValue == 1):
+            return [float('-inf'), heuristicFunction1(player, board)]
+        else:
+            return [float('-inf'), utilityH2(player, board)]
+
+    value = float('-inf')
+    
+    if boardToHashIndex(board) in path:
+        return False
+
+    for action in range( len( board[player] ) ):
+        if board[player][action] != 0: #if the move is valid
+            if moves > 1:
+                newPath = deepcopy(path)
+                newPath.insert(0, boardToHashIndex(board))
+                newValue = andSearch( results(board, action, player), newPath, moves - 1, heurValue, player)
+            else:
+                if(heurValue == 1):
+                    newValue = heuristicFunction1(player, result(board, action, player))
+                else:
+                    newValue = utilityH2(player, result(board, action, player))
+
+            if newValue != False:
+                if newValue > value:
+                    value = newValue
+                    plan = [action, newValue]
+
+            if plan == False:
+                plan = [action, value]
+
+    return plan
+
+'''
+Function:   andSearch
+Purpose:    This algorithm takes in a list of states that the opponent might
+            generate, and evaluates each state by calling the or search algorithm
+            on it.
+
+
+Parameters:     
+    states:     The boards to perform the search on
+    path:       The path of previous boards visisted
+    moves:      The number of moves left to move ahead
+    heurValue:  The enumerated value of the heuristic to use
+    player:     The player who's optimum move you are searching for  
+
+Returns:    The average of the heuristic value returned for each state
+            False any state returns false from the or search
+'''
+def andSearch(states, path, moves, heurValue, player):
+    if not states:
+        return float('-inf')
+
+    returnValue = 0
+
+    for state in states:
+        if moves <= 0:
+            if(heurValue == 1):
+                returnValue = returnValue + heuristicFunction1(player, state)
+            else:
+                returnValue = returnValue + utilityH2(player, state)
+        else:
+            newPlan = orSearch( state, path, moves - 1, heurValue, PLAYER )
+            
+            if newPlan == False:
+                return False
+
+            returnValue = returnValue + newPlan[VALUE]
+
+    #return average of board heuristics
+    if( len(states) != 0):
+        return (returnValue / len(states))
+    else:
+        return returnValue
+
+
+'''######################################
+#                                       #
+#         Helper Functionality          #
+#                                       #
+######################################'''
+
+'''
+Function:  result
+Purpose:  Copies the current game board and starts testing moves the current player
+          can make.
+Parameters:
+    state:  This is the current gameBoard and is used to determine the current
+                  player's number of pebbles.
+    action:  This is the column number the current player is moving his or her
+            pebbles from
+    currentPlayer:  Used to determine which player's heuristic value to calculate
+Returns:  The hypothetical game board for testing a move the player is thinking
+          about making
+'''
+def result(state, action, currentPlayer):
+    numberOfColumns = len(state[0])
+    tempState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
+    makeMove(tempState, currentPlayer, action)
+    return tempState
+
+'''
+Function:   results
+Purpose:    Provides a list of states that are potentially presented after a player 
+            makes a certain move, and the opponent responds with it's move.
+
+Parameters:
+    state:      The current board to be evaluated
+    action:     The move the player will make
+    player:     The current player making a move
+
+Returns:    A list of states that are possible after a player "player" makes
+            a move "action" on board "state"
+'''
+def results(state, action, player):
+    resultStates = []
+    numberOfColumns = len(state[0])
+    newState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
+
+    newState = result(newState, action, player)
+
+    if goalTest(newState):
+        return resultStates
+
+    opponent = 1 - player
+
+    for action in range( numberOfColumns ):
+        tempState = deepcopy(newState)
+        if tempState[opponent][action] != 0:
+            makeMove(tempState, opponent, action)
+            resultStates.append(tempState)
+
+    return resultStates
+
+'''
+Function:  cutoffTest
+Purpose:  Tests to see if the search has reached the end of the ply or if the
+          state currently being searched is a goal state.
+Parameters:
+    state:  This is the current gameBoard and is used to if the state has reached
+             a goal state.
+    depth:  The current depth of the search tree
+Returns:  If the current state is at the specified ply or a goal state
+'''
+def cutOffTest(state, depth):
+    if (depth == depthForCutOffTest):
+        return True
+    elif (goalTest(state)):
+        return True
+    else:
+        return False
+
+'''
+Function:   isValidBoard
+Purpose:    Determines whether a board is a valid 2-row board
+
+Parameters: 
+    gameBoard:  The game board to be evaluated
+
+Returns:    True if the game board has two rows 
+            False if otherwise
+'''
+def isValidBoard(gameBoard):
+    if( len(gameBoard) != 2 ):
+        return False
+    else:
+        return True
+
+'''
+Function:   goalTest
+Purpose:    Used to determine whether a game board is in a state that constitutes a win or loss.
+
+Parameters: 
+    gameBoard:  A game board that may or may not be in a goal state.
+
+Returns:    Returns True if the game board is in a state that constitutes a win or loss.
+            Returns False otherwise
+'''
 def goalTest(gameBoard):
     bPlayer1Empty = True
     bPlayer2Empty = True
@@ -363,6 +565,7 @@ def printGameBoard(gameBoardIn):
         rowString += "]"
     print rowString
     return
+
 
 '''
 Function:  main
@@ -631,122 +834,6 @@ def main():
             print "Player 1 won!"
     
     return
-
-#########################################
-#                                       #
-# AND-OR Search Algorithm Functionality #
-#                                       #
-#########################################
-
-def andOrGraphSearch(gameBoard, ply, heurValue, player):
-    if( not isValidBoard(gameBoard) ):
-        return False
-
-    # Problem is the board given
-    # State is the current state of the board
-    return orSearch(gameBoard, [], ply, heurValue, player)[ACTION]
-
-
-def orSearch(board, path, moves, heurValue, player):
-    plan = False
-
-    if goalTest(board): 
-        return [-1, float('inf')]
-
-    if moves <= 0:
-        if(heurValue == 1):
-            return [float('-inf'), heuristicFunction1(player, board)]
-        else:
-            return [float('-inf'), utilityH2(player, board)]
-
-    value = float('-inf')
-    
-    if boardToHashIndex(board) in path:
-        return False
-
-    for action in range( len( board[player] ) ):
-        if board[player][action] != 0: #if the move is valid
-            if moves > 1:
-                newPath = deepcopy(path)
-                newPath.insert(0, boardToHashIndex(board))
-                newValue = andSearch( results(board, action, player), newPath, moves - 1, heurValue, player)
-            else:
-                if(heurValue == 1):
-                    newValue = heuristicFunction1(player, result(board, action, player))
-                else:
-                    newValue = utilityH2(player, result(board, action, player))
-
-            if newValue != False:
-                if newValue > value:
-                    value = newValue
-                    plan = [action, newValue]
-
-            if plan == False:
-                plan = [action, value]
-
-    return plan
-
-def andSearch(states, path, moves, heurValue, player):
-    if not states:
-        return float('-inf')
-
-    returnValue = 0
-
-    for state in states:
-        if moves <= 0:
-            if(heurValue == 1):
-                returnValue = returnValue + heuristicFunction1(player, state)
-            else:
-                returnValue = returnValue + utilityH2(player, state)
-        else:
-            newPlan = orSearch( state, path, moves - 1, heurValue, PLAYER )
-            
-            if newPlan == False:
-                return False
-
-            returnValue = returnValue + newPlan[VALUE]
-
-    #return average of board heuristics
-    if( len(states) != 0):
-        return (returnValue / len(states))
-    else:
-        return returnValue
-
-
-#results returns a list of states that are potentially presented after player makes a move
-# and the opponent responds
-def results(state, action, player):
-    resultStates = []
-    numberOfColumns = len(state[0])
-    newState = [[state[x][y] for y in range(numberOfColumns)] for x in range(2)]
-
-    newState = result(newState, action, player)
-
-    if goalTest(newState):
-        print "AO-RESULTS RETURN EMPTY"
-        return resultStates
-
-    opponent = 1 - player
-
-    for action in range( numberOfColumns ):
-        tempState = deepcopy(newState)
-        if tempState[opponent][action] != 0:
-            makeMove(tempState, opponent, action)
-            resultStates.append(tempState)
-
-    return resultStates
-
-#########################################
-#                                       #
-#         Helper Functionality          #
-#                                       #
-#########################################
-
-def isValidBoard(gameBoard):
-    if( len(gameBoard) != 2 ):
-        return False
-    else:
-        return True
 
 if __name__ == '__main__':
     main()
