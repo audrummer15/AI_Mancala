@@ -566,7 +566,62 @@ def printGameBoard(gameBoardIn):
     print rowString
     return
 
-
+'''
+Function:  makeMove
+Purpose:  Allows players to move their pebbles on the game board.  The variable
+          colToMoveFromIn is the slot where the pebbles are removed and then
+          distributed in a clockwise manner.
+Parameters:
+    gameBoardIn:  This is the current state of the game board
+    currentPlayersMove:  Used to determine which row to move the pebble from
+    colToMoveFromIn:  Used to determine which column to remove the pebbles from
+Returns:  Nothing
+'''
+def makeMove(gameBoardIn, currentPlayersMove, colToMoveFromIn):
+    if (currentPlayersMove == PLAYER1):
+        pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
+        gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
+        maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
+        if(colToMoveFromIn == maxColIndex):
+            currentRow = PLAYER2
+            currentColumn = maxColIndex
+        else:
+            currentRow = currentPlayersMove
+            currentColumn = (colToMoveFromIn + 1)
+        while (pebsToMove > 0):
+            gameBoardIn[currentRow][currentColumn] += 1
+            pebsToMove -= 1
+            if((currentColumn == 0) and (currentRow == PLAYER2)):
+                currentRow = PLAYER1
+            elif((currentColumn == maxColIndex) and (currentRow == PLAYER1)):
+                currentRow = PLAYER2
+            elif (currentRow == PLAYER2):
+                currentColumn -= 1
+            elif (currentRow == PLAYER1):
+                currentColumn += 1
+    else: #player 2
+        pebsToMove = gameBoardIn[currentPlayersMove][colToMoveFromIn]
+        gameBoardIn[currentPlayersMove][colToMoveFromIn] = 0
+        maxColIndex = len(gameBoardIn[currentPlayersMove]) - 1
+        if(colToMoveFromIn == 0):
+            currentRow = PLAYER1
+            currentColumn = 0
+        else:
+            currentRow = currentPlayersMove
+            currentColumn = (colToMoveFromIn - 1)
+        while (pebsToMove > 0):
+            gameBoardIn[currentRow][currentColumn] += 1
+            pebsToMove -= 1
+            if((currentColumn == 0) and (currentRow == PLAYER2)):
+                currentRow = PLAYER1
+            elif((currentColumn == maxColIndex) and (currentRow == PLAYER1)):
+                currentRow = PLAYER2
+            elif (currentRow == PLAYER2):
+                currentColumn -= 1
+            elif (currentRow == PLAYER1):
+                currentColumn += 1
+    return
+    
 '''
 Function:  main
 Purpose:  Used interact with user and set up the Pebble Play game.  We
